@@ -49,14 +49,14 @@ chartVersion: <semver>                   # pin explicitly
 namespace: <target-namespace>
 environments:
   - env: dev
-    valueFiles:
-      - apps/<service>/default-values.yaml
-      - apps/<service>/dev-values.yaml
+    defaultValuesFile: $values/apps/<service>/default-values.yaml
+    envValuesFile: $values/apps/<service>/dev-values.yaml
   - env: prod
-    valueFiles:
-      - apps/<service>/default-values.yaml
-      - apps/<service>/prod-values.yaml
+    defaultValuesFile: $values/apps/<service>/default-values.yaml
+    envValuesFile: $values/apps/<service>/prod-values.yaml
 ```
+
+`$values` resolves to the `ref: values` source pointing at this repo, so paths are relative to the repo root.
 
 ## Adding a new application
 
