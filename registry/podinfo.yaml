@@ -1,0 +1,14 @@
+name: podinfo
+chartRepoURL: https://stefanprodan.github.io/podinfo
+chart: podinfo
+chartVersion: 6.14.0
+namespace: podinfo
+environments:
+  - env: dev
+    valueFiles:
+      - $values/apps/podinfo/default-values.yaml
+      - $values/apps/podinfo/dev-values.yaml
+  - env: prod
+    valueFiles:
+      - $values/apps/podinfo/default-values.yaml
+      - $values/apps/podinfo/prod-values.yaml

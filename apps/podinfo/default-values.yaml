@@ -1,0 +1,14 @@
+# podinfo — base values applied across all environments
+ui:
+  message: "Platform Engineering Lab"
+
+serviceAccount:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi

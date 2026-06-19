@@ -1,0 +1,13 @@
+# prod spoke — two replicas, HPA enabled
+replicaCount: 2
+
+ui:
+  color: "#2196F3"
+  message: "Platform Engineering Lab — prod"
+
+hpa:
+  enabled: true
+  maxReplicas: 4
+  cpu:
+    enabled: true
+    percent: 70
