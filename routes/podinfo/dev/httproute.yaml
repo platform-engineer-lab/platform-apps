@@ -7,6 +7,8 @@ spec:
   parentRefs:
     - name: podinfo
       namespace: podinfo
+  hostnames:
+    - "dev.platformlab.com"
   rules:
     - backendRefs:
         - name: podinfo
