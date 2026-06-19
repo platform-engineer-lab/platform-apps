@@ -8,6 +8,4 @@ ui:
 hpa:
   enabled: true
   maxReplicas: 4
-  cpu:
-    enabled: true
-    percent: 70
+  cpu: 70
