@@ -8,6 +8,43 @@ Modelled after [marqeta/argo-cd-app-registry](https://github.com/marqeta/argo-cd
 - **Destination by `name`** (`dev` / `prod`) instead of computed cluster names — stable across k3d restarts.
 - **AppProject + ApplicationSet created imperatively by bootstrap** (consistent with the existing lab convention) rather than synced from a control repo.
 
+## Delivery pipeline
+
+```mermaid
+flowchart LR
+    subgraph github["GitHub"]
+        SRC["sample-service\nsource + Dockerfile + CI"]
+        CFG["sample-service-config\ndry Helm chart"]
+        ADD["platform-addons\nroles/&lt;role&gt;/"]
+        APP["platform-apps\nregistry/*.yaml"]
+    end
+
+    GHCR[("GHCR\nghcr.io/…/sample-service:&lt;sha&gt;")]
+
+    subgraph mgmt["management cluster"]
+        AC(["Argo CD"])
+        HY["Source\nHydrator"]
+        GP["gitops-\npromoter"]
+    end
+
+    DEV(["dev spoke"])
+    PROD(["prod spoke"])
+
+    SRC -->|"CI: build + push :sha"| GHCR
+    SRC -->|"CI: PR bump image.tag"| CFG
+    ADD -->|"App-of-Apps"| AC
+    APP -->|"cd-apps ApplicationSet"| AC
+    CFG -->|"dry source HEAD"| HY
+    HY -->|"push env/dev-next\nenv/prod-next"| CFG
+    CFG -->|"env/dev · env/prod"| AC
+    GP -->|"merge env/*-next → env/*"| CFG
+    AC -->|"sync"| DEV
+    AC -->|"sync"| PROD
+    GHCR -.->|"pull"| DEV
+    GHCR -.->|"pull"| PROD
+    DEV -->|"argocd-health ✓\nunlocks prod"| GP
+```
+
 ## How it works
 
 ```
