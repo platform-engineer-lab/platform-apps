@@ -1,6 +1,6 @@
 # platform-apps
 
-Business application registry and Helm values for the [platform-engineering-lab](https://github.com/platform-engineer-lab) hub-and-spoke Argo CD setup.
+Business application registry for the [platform-engineering-lab](https://github.com/platform-engineer-lab) hub-and-spoke Argo CD setup. Each app's Helm values live in its own dedicated config repo; this repo acts as the central discovery layer for three ApplicationSets.
 
 Modelled after [marqeta/argo-cd-app-registry](https://github.com/marqeta/argo-cd-app-registry) with the following intentional differences:
 
@@ -56,6 +56,9 @@ platform-control-plane/scripts/bootstrap.sh
   │         ↓  one multi-source Helm Application per (service × env)
   │     podinfo-dev   → destination.name: dev   ($values → podinfo-config repo)
   │     podinfo-prod  → destination.name: prod
+  ├── creates ApplicationSet "cd-routes"          (reads routes/*/*)
+  │         ↓  one HTTPRoute Application per (app × env)
+  │     routes-podinfo-dev, routes-podinfo-prod, …
   └── creates ApplicationSet "cd-promoter-config" (reads promoter/*.yaml)
             ↓  one Application per promoter-enabled app → management cluster
         sample-service-promoter-config → sample-service-config/config/
