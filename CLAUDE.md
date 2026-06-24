@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 flowchart LR
     subgraph github["GitHub"]
         SRC["sample-service\nsource + Dockerfile + CI"]
-        CFG["sample-service-config\ndry Helm chart"]
+        CFG["sample-service-config\ndry Helm chart · .argocd/registry.yaml"]
         ADD["platform-addons\nroles/<role>/"]
-        APP["platform-apps\nregistry/*.yaml"]
+        PCFG["podinfo-config\n.argocd/registry.yaml"]
     end
 
     GHCR[("GHCR\nghcr.io/…/sample-service:<sha>")]
@@ -27,7 +27,8 @@ flowchart LR
     SRC -->|"CI: build + push :sha"| GHCR
     SRC -->|"CI: PR bump image.tag"| CFG
     ADD -->|"App-of-Apps"| AC
-    APP -->|"cd-apps ApplicationSet"| AC
+    PCFG -->|"apps ApplicationSet"| AC
+    CFG -->|"promoter ApplicationSet"| AC
     CFG -->|"dry source HEAD"| HY
     HY -->|"push env/dev-next\nenv/prod-next"| CFG
     CFG -->|"env/dev · env/prod"| AC
@@ -41,47 +42,42 @@ flowchart LR
 
 ## Architecture
 
-`platform-apps` is the central registry for all business applications. It contains two discovery directories read by ApplicationSets in `platform-control-plane/scripts/bootstrap.sh`:
+`platform-apps` now owns **routes only**. App registration has moved to each app's own config repo via `.argocd/registry.yaml`.
 
-### `registry/` — standard Helm apps (`cd-apps` ApplicationSet)
+### `routes/` — HTTPRoutes (`app-routes` ApplicationSet)
 
-Each `registry/<service>.yaml` declares a Helm app: chart source, version, namespace, `valuesRepoURL`, and environments. The `cd-apps` ApplicationSet uses a matrix generator (git-file over `registry/*.yaml` × list expanding `environments`) to generate one Argo CD Application per (service × env). Multi-source Helm: upstream chart + `ref: values` source pointing at `valuesRepoURL` so `$values/` paths resolve into the app's own config repo.
+Git directory generator over `routes/<app>/<env>/`. Each directory contains an Envoy Gateway `HTTPRoute` manifest. The `app-routes` ApplicationSet generates one Argo CD Application per (app × env), syncing the HTTPRoute to the appropriate spoke. Adding a new route requires no bootstrap changes — just create the directory and push.
 
-Helm values live in dedicated per-app config repos (e.g. `podinfo-config`) — **not** in `apps/` inside this repo.
+### App registration (not in this repo)
 
-### `promoter/` — gitops-promoter apps (`cd-promoter-config` ApplicationSet)
+Each app config repo carries `.argocd/registry.yaml`. The `apps` and `promoter` ApplicationSets in `platform-control-plane/scripts/bootstrap.sh` read these files via static per-repo git generators (`HELM_APP_REPOS` / `PROMOTER_APP_REPOS` arrays).
 
-Each `promoter/<service>.yaml` declares a promoter-enabled app with `configRepoURL` and `configPath`. The `cd-promoter-config` ApplicationSet generates one Argo CD Application per entry, pointing at `<configRepoURL>/<configPath>/` on the management cluster. That Application syncs all app-level Argo CD Applications and gitops-promoter CRs from the app's own config repo.
-
-## Registry file schemas
-
-**`registry/<service>.yaml`** (standard Helm via `cd-apps`):
+**Helm app schema** (`apps` ApplicationSet):
 ```yaml
 name: <service>
-chartRepoURL: https://...
+repoUrl: <helm chart registry URL>
 chart: <chart-name>
 chartVersion: <semver>
 namespace: <target-namespace>
 valuesRepoURL: https://github.com/platform-engineer-lab/<service>-config
-environments:
+environment:
   - env: dev
-    defaultValuesFile: $values/values/default-values.yaml
-    envValuesFile: $values/values/dev-values.yaml
+    defaultValuesFile: values/default-values.yaml
+    valuesFile: values/dev-values.yaml
   - env: prod
-    defaultValuesFile: $values/values/default-values.yaml
-    envValuesFile: $values/values/prod-values.yaml
+    defaultValuesFile: values/default-values.yaml
+    valuesFile: values/prod-values.yaml
 ```
 
-**`promoter/<service>.yaml`** (gitops-promoter pipeline via `cd-promoter-config`):
+**Promoter app schema** (`promoter` ApplicationSet):
 ```yaml
 name: <service>
-configRepoURL: https://github.com/platform-engineer-lab/<service>-config
+repoUrl: https://github.com/platform-engineer-lab/<service>-config
 configPath: config
 ```
 
 ## Key conventions
 
 - **Never use `destination.server`** — always `destination.name` (`dev` or `prod`).
-- **Helm values live in per-app config repos** — `apps/` no longer exists in this repo; `$values/` resolves to `valuesRepoURL`.
-- **Adding a standard Helm app**: create `registry/<svc>.yaml` with `valuesRepoURL` pointing at a dedicated `<svc>-config` repo that holds the values files.
-- **Adding a promoter-enabled app**: create `promoter/<svc>.yaml` pointing at the app's config repo; ensure `config/apps/` and `config/promoter/` exist there.
+- **Adding a route**: create `routes/<app>/<env>/httproute.yaml` — `app-routes` discovers it automatically.
+- **Adding an app**: create the app's config repo with `.argocd/registry.yaml`, then add the repo URL to `HELM_APP_REPOS` or `PROMOTER_APP_REPOS` in `platform-control-plane/scripts/bootstrap.sh`.
