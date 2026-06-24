@@ -69,11 +69,21 @@ environment:
     valuesFile: values/prod-values.yaml
 ```
 
-**Promoter app schema** (`promoter` ApplicationSet):
+**Promoter app schema** (`promoter` ApplicationSet → `platform-addons/charts/business-app/`):
 ```yaml
 name: <service>
 repoUrl: https://github.com/platform-engineer-lab/<service>-config
-configPath: config
+chartPath: chart
+namespace: <target namespace>
+githubOwner: <GitHub org>
+githubName: <config repo name>
+environment:
+  - env: dev
+    valuesFile: env/dev/values.yaml
+    autoMerge: true
+  - env: prod
+    valuesFile: env/prod/values.yaml
+    autoMerge: true   # false = require manual PR approval
 ```
 
 ## Key conventions

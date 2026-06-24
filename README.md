@@ -41,8 +41,20 @@ environment:
 ```yaml
 name: sample-service
 repoUrl: https://github.com/platform-engineer-lab/sample-service-config
-configPath: config
+chartPath: chart
+namespace: sample-service
+githubOwner: platform-engineer-lab
+githubName: sample-service-config
+environment:
+  - env: dev
+    valuesFile: env/dev/values.yaml
+    autoMerge: true
+  - env: prod
+    valuesFile: env/prod/values.yaml
+    autoMerge: true   # false = require manual PR approval
 ```
+
+The `promoter` ApplicationSet renders `platform-addons/charts/business-app/` with these values — no `config/` directory needed in the app repo.
 
 ## Adding a new route
 
