@@ -3,10 +3,11 @@ chartRepoURL: https://stefanprodan.github.io/podinfo
 chart: podinfo
 chartVersion: 6.14.0
 namespace: podinfo
+valuesRepoURL: https://github.com/platform-engineer-lab/podinfo-config
 environments:
   - env: dev
-    defaultValuesFile: $values/apps/podinfo/default-values.yaml
-    envValuesFile: $values/apps/podinfo/dev-values.yaml
+    defaultValuesFile: $values/values/default-values.yaml
+    envValuesFile: $values/values/dev-values.yaml
   - env: prod
-    defaultValuesFile: $values/apps/podinfo/default-values.yaml
-    envValuesFile: $values/apps/podinfo/prod-values.yaml
+    defaultValuesFile: $values/values/default-values.yaml
+    envValuesFile: $values/values/prod-values.yaml

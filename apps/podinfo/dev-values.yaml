@@ -1,6 +1,0 @@
-# dev spoke — single replica, light footprint
-replicaCount: 1
-
-ui:
-  color: "#4CAF50"
-  message: "Platform Engineering Lab — dev"

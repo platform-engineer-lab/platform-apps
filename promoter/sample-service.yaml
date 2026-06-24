@@ -1,0 +1,3 @@
+name: sample-service
+configRepoURL: https://github.com/platform-engineer-lab/sample-service-config
+configPath: config

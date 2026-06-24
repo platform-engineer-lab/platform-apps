@@ -1,6 +1,0 @@
-# prod spoke — two replicas
-replicaCount: 2
-
-ui:
-  color: "#2196F3"
-  message: "Platform Engineering Lab — prod"
